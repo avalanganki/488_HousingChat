@@ -1,3 +1,4 @@
+# Imports
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
@@ -6,7 +7,7 @@ import streamlit as st
 from openai import OpenAI
 import chromadb
  
-
+# Page Configurations
 st.set_page_config(
     page_title="SU Housing Assistant",
     page_icon="🏠",
@@ -17,9 +18,7 @@ st.title("🏠 Syracuse University Housing Assistant")
 st.caption("Ask anything about SU residence halls, room types, dining, and more.")
  
  
-# ============================================================
-# LOAD CHROMADB (cached so it only runs once per session)
-# ============================================================
+# Loading ChromaDB - cached
 @st.cache_resource
 def load_chroma():
     client = chromadb.PersistentClient(path="./chroma_db")
@@ -29,17 +28,11 @@ def load_chroma():
 collection = load_chroma()
  
  
-# ============================================================
-# OPENAI CLIENT
-# ============================================================
-# Uses Streamlit secrets — set OPENAI_API_KEY in .streamlit/secrets.toml
-# or in Streamlit Cloud app settings > Secrets
+# OpenAI client (Langanki's key)
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
  
  
-# ============================================================
-# SYSTEM PROMPT
-# ============================================================
+# Sys. Prompt
 SYSTEM_PROMPT = """You are the Syracuse University Housing Assistant, a helpful chatbot 
 that answers questions about SU residence halls and housing options.
  
@@ -57,9 +50,7 @@ HOUSING CONTEXT:
 """
  
  
-# ============================================================
-# RAG QUERY FUNCTION
-# ============================================================
+# Rag Query Function
 def get_housing_context(user_question, n_results=3):
     """
     Query ChromaDB for the most relevant housing data chunks.
@@ -70,14 +61,12 @@ def get_housing_context(user_question, n_results=3):
         n_results=n_results,
     )
     
-    # Combine the retrieved documents into one context string
+    # Combine
     context_pieces = results["documents"][0]  # list of strings
     return "\n\n---\n\n".join(context_pieces)
  
  
-# ============================================================
-# SIDEBAR
-# ============================================================
+# Sidebar
 with st.sidebar:
     st.header("About")
     st.write(
@@ -85,7 +74,7 @@ with st.sidebar:
         "to answer your questions about residence halls."
     )
     
-    # Optional: let user control retrieval depth
+    # let user control retrieval depth
     n_results = st.slider(
         "Number of data chunks to retrieve",
         min_value=1,
@@ -94,13 +83,11 @@ with st.sidebar:
         help="Higher = more context for the LLM, but slower and more tokens used."
     )
     
-    # TODO (Person 3 — Polish): Add class year filter
+    # TODO: Add class year filter
     # class_year = st.selectbox("I am a...", ["Anyone", "Freshman", "Sophomore", "Transfer"])
  
  
-# ============================================================
-# CHAT HISTORY (session state)
-# ============================================================
+# Chat History 
 if "messages" not in st.session_state:
     st.session_state.messages = []
  
@@ -110,9 +97,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
  
  
-# ============================================================
-# CHAT INPUT & RESPONSE
-# ============================================================
+# Input & Response
 if user_input := st.chat_input("Ask about SU housing..."):
     
     # Display user message
@@ -120,7 +105,7 @@ if user_input := st.chat_input("Ask about SU housing..."):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
-    # --- RAG Pipeline ---
+    # RAG Pipeline
     # Step 1: Retrieve relevant housing data from ChromaDB
     context = get_housing_context(user_input, n_results=n_results)
     
@@ -131,7 +116,7 @@ if user_input := st.chat_input("Ask about SU housing..."):
     # Include system prompt + conversation history + new message
     openai_messages = [{"role": "system", "content": system_with_context}]
     
-    # Add conversation history (so the bot can handle follow-ups)
+    # Add conversation history (followups)
     for msg in st.session_state.messages:
         openai_messages.append({"role": msg["role"], "content": msg["content"]})
     
@@ -140,7 +125,7 @@ if user_input := st.chat_input("Ask about SU housing..."):
         stream = client.chat.completions.create(
             model="gpt-4o",
             messages=openai_messages,
-            temperature=0.3,  # Low temp for factual accuracy
+            temperature=0.3, # Factual bot
             stream=True,
         )
         response = st.write_stream(stream)
