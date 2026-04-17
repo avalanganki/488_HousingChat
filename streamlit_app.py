@@ -6,10 +6,7 @@ import streamlit as st
 from openai import OpenAI
 import chromadb
  
- 
-# ============================================================
-# PAGE CONFIG
-# ============================================================
+
 st.set_page_config(
     page_title="SU Housing Assistant",
     page_icon="🏠",
@@ -17,7 +14,7 @@ st.set_page_config(
 )
  
 st.title("🏠 Syracuse University Housing Assistant")
-st.caption("Ask me anything about SU residence halls, room types, dining, and more.")
+st.caption("Ask anything about SU residence halls, room types, dining, and more.")
  
  
 # ============================================================
