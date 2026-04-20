@@ -8,7 +8,6 @@ from openai import OpenAI
 import chromadb
 import json
 import os
-import requests
  
 # Page Configurations
 st.set_page_config(
@@ -33,8 +32,9 @@ collection = load_chroma()
  
 # OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
- 
-#Long-Term Memory - JSON Approach
+
+
+# Long-Term Memory: JSON Approach
 LTM_FILE = "user_memory.json"
  
 def load_memory():
@@ -108,8 +108,9 @@ def format_memory_for_prompt(memory):
         label = labels.get(key, key)
         lines.append(f"- {label}: {value}")
     return "\n".join(lines)
- 
-#Reranking
+
+
+# Reranking using nano
 def score_chunk(chunk, question):
     """Score how relevant a chunk is to the user's question (1-10)."""
     scoring_prompt = f"""Rate how relevant this text is to answering the question.
@@ -165,9 +166,11 @@ def get_housing_context(user_question, n_results=3, use_reranking=True):
  
     return "\n\n---\n\n".join(best_chunks)
 
-#WALKING TOOL CODE HERE
- 
-# Sys. Prompt
+
+# WALKING TOOL CODE HERE
+
+
+# System Prompt
 SYSTEM_PROMPT = """You are the Syracuse University Housing Assistant, a helpful chatbot 
 that answers questions about SU residence halls and housing options.
  
@@ -179,28 +182,20 @@ RULES:
 - When comparing halls, organize your answer clearly.
 - If a student mentions their class year, use that to filter your recommendations 
   (e.g., freshmen can't live in Booth Hall).
+- The student's class year from the sidebar filter is: {class_year}. 
+  If it's "Not specified", ask them if relevant. If specified, ALWAYS filter your 
+  recommendations based on housing eligibility for that class year.
+- If you know the student's preferences (listed below), use them to personalize your answers.
+
+STUDENT PREFERENCES (from previous conversations):
+{preferences}
  
 HOUSING CONTEXT:
 {context}
 """
  
  
-# Rag Query Function
-def get_housing_context(user_question, n_results=3):
-    """
-    Query ChromaDB for the most relevant housing data chunks.
-    Returns the concatenated text of the top results.
-    """
-    results = collection.query(
-        query_texts=[user_question],
-        n_results=n_results,
-    )
-    
-    # Combine
-    context_pieces = results["documents"][0]  # list of strings
-    return "\n\n---\n\n".join(context_pieces)
- 
- 
+# Sidebar
 with st.sidebar:
     st.header("About")
     st.write(
@@ -222,6 +217,7 @@ with st.sidebar:
                                help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.")
  
     st.divider()
+
     # Class year filter
     st.header("Your Info")
     class_year = st.selectbox(
@@ -235,7 +231,10 @@ with st.sidebar:
         if memory.get("class_year") != class_year.lower():
             memory["class_year"] = class_year.lower()
             save_memory(memory)
-        # Show stored preferences
+
+    st.divider()
+
+    # Show stored preferences
     st.header("Your Preferences")
     memory = load_memory()
     if memory:
@@ -247,7 +246,8 @@ with st.sidebar:
     else:
         st.write("No preferences saved yet. Just chat and I'll learn what matters to you!")
  
-# Chat History 
+
+# Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
  
@@ -257,7 +257,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
  
  
-# Input & Response
+# Input and Response 
 if user_input := st.chat_input("Ask about SU housing..."):
  
     # Display user message
