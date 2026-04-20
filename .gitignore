@@ -1,5 +1,6 @@
 .streamlit/secrets.toml
-./chroma_db
+user_memory.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
