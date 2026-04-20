@@ -8,6 +8,7 @@ from openai import OpenAI
 import chromadb
 import json
 import os
+import requests
  
 # Page Configurations
 st.set_page_config(
@@ -168,6 +169,48 @@ def get_housing_context(user_question, n_results=3, use_reranking=True):
 
 
 # WALKING TOOL CODE HERE
+# Walking Distance Tool
+def get_walking_distance(origin, destination):
+    """
+    Uses Google Maps Routes API to get walking distance and time
+    between two locations on/near Syracuse University campus.
+    """
+    api_key = st.secrets["GOOGLE_MAPS_API_KEY"]
+    url = "https://routes.googleapis.com/directions/v2:computeRoutes"
+    
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": api_key,
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs.duration,routes.legs.distanceMeters"
+    }
+    
+    body = {
+        "origin": {
+            "address": f"{origin}, Syracuse University, Syracuse, NY"
+        },
+        "destination": {
+            "address": f"{destination}, Syracuse University, Syracuse, NY"
+        },
+        "travelMode": "WALK"
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=body)
+        data = response.json()
+        
+        if "routes" in data and len(data["routes"]) > 0:
+            route = data["routes"][0]
+            distance_meters = route["distanceMeters"]
+            duration_seconds = int(route["duration"].replace("s", ""))
+            
+            distance_miles = round(distance_meters * 0.000621371, 2)
+            duration_minutes = round(duration_seconds / 60)
+            
+            return f"Walking from {origin} to {destination}: approximately {distance_miles} miles ({duration_minutes} minutes on foot)."
+        else:
+            return f"Sorry, I couldn't find walking directions from {origin} to {destination}."
+    except Exception as e:
+        return f"Error getting walking directions: {str(e)}"
 
 
 # System Prompt
@@ -189,6 +232,12 @@ RULES:
 
 STUDENT PREFERENCES (from previous conversations):
 {preferences}
+
+WALKING DIRECTIONS:
+If a student asks about walking distance, how far something is, or how long it takes 
+to walk between two locations, you will be given walking distance data. Use it in your answer.
+
+{walking_info}
  
 HOUSING CONTEXT:
 {context}
@@ -265,8 +314,37 @@ if user_input := st.chat_input("Ask about SU housing..."):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
  
-    # Load current memory
+  # Load current memory
     memory = load_memory()
+ 
+    # Check if user is asking about walking distance
+    walking_info = ""
+    walking_keywords = ["walk", "distance", "how far", "minutes from", "close to", "near", "get to", "commute"]
+    if any(keyword in user_input.lower() for keyword in walking_keywords):
+        # Use GPT to extract the two locations from the question
+        extract_prompt = f"""The user is asking about walking distance between locations at Syracuse University.
+Extract the two locations from their question. Return ONLY a JSON object like:
+{{"origin": "location 1", "destination": "location 2"}}
+
+If you can't find two clear locations, return: {{"error": "true"}}
+
+USER QUESTION: {user_input}"""
+        
+        try:
+            extract_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": extract_prompt}],
+                temperature=0,
+                max_tokens=100,
+            )
+            result = extract_response.choices[0].message.content.strip()
+            result = result.replace("```json", "").replace("```", "").strip()
+            locations = json.loads(result)
+            
+            if "error" not in locations:
+                walking_info = get_walking_distance(locations["origin"], locations["destination"])
+        except (json.JSONDecodeError, Exception):
+            pass
  
     # Step 1 & 2: Retrieve + optionally rerank
     context = get_housing_context(user_input, n_results=n_results, use_reranking=use_reranking)
@@ -276,6 +354,7 @@ if user_input := st.chat_input("Ask about SU housing..."):
         context=context,
         preferences=format_memory_for_prompt(memory),
         class_year=class_year,
+        walking_info=walking_info if walking_info else "No walking directions requested.",
     )
  
     # Step 4: Build message history for OpenAI
