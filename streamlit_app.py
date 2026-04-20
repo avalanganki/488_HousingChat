@@ -295,6 +295,3 @@ if user_input := st.chat_input("Ask about SU housing..."):
  
     # Save assistant response to history
     st.session_state.messages.append({"role": "assistant", "content": response})
- 
-    # LTM: Extract preferences in the background
-    memory = extract_preferences(user_input, response, memory)
