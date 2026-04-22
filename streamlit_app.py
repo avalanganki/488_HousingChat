@@ -371,14 +371,18 @@ USER QUESTION: {user_input}"""
         )
 
         response = ""
+        response_id = None
         response_container = st.empty()
         for event in stream:
             if event.type == "response.output_text.delta":
                 response += event.delta
                 response_container.markdown(response)
+            elif event.type == "response.completed":
+                response_id = event.response.id
 
     # Save the response ID for next turn
-    st.session_state.last_response_id = stream.response.id
+    if response_id:
+        st.session_state.last_response_id = response_id
 
     # Save assistant response to history
     st.session_state.messages.append({"role": "assistant", "content": response})
