@@ -378,7 +378,7 @@ USER QUESTION: {user_input}"""
                 response_container.markdown(response)
 
     # Save the response ID for next turn
-    st.session_state.last_response_id = stream.get_final_response().id
+    st.session_state.last_response_id = stream.response.id
 
     # Save assistant response to history
     st.session_state.messages.append({"role": "assistant", "content": response})
