@@ -299,6 +299,8 @@ with st.sidebar:
 # Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "last_response_id" not in st.session_state:
+    st.session_state.last_response_id = None
  
 # Display existing chat messages
 for message in st.session_state.messages:
@@ -345,10 +347,10 @@ USER QUESTION: {user_input}"""
                 walking_info = get_walking_distance(locations["origin"], locations["destination"])
         except (json.JSONDecodeError, Exception):
             pass
- 
+
     # Step 1 & 2: Retrieve + optionally rerank
     context = get_housing_context(user_input, n_results=n_results, use_reranking=use_reranking)
- 
+
     # Step 3: Build system prompt with context AND memory
     system_with_context = SYSTEM_PROMPT.format(
         context=context,
@@ -356,24 +358,30 @@ USER QUESTION: {user_input}"""
         class_year=class_year,
         walking_info=walking_info if walking_info else "No walking directions requested.",
     )
- 
-    # Step 4: Build message history for OpenAI
-    openai_messages = [{"role": "system", "content": system_with_context}]
-    for msg in st.session_state.messages:
-        openai_messages.append({"role": msg["role"], "content": msg["content"]})
- 
-    # Step 5: Call OpenAI with streaming
+
+    # Step 4 & 5: Call Responses API with streaming
     with st.chat_message("assistant"):
-        stream = client.chat.completions.create(
+        stream = client.responses.create(
             model="gpt-4o",
-            messages=openai_messages,
-            temperature=0.3,
+            instructions=system_with_context,
+            input=user_input,
+            previous_response_id=st.session_state.last_response_id,
             stream=True,
+            temperature=0.3,
         )
-        response = st.write_stream(stream)
- 
+
+        response = ""
+        response_container = st.empty()
+        for event in stream:
+            if event.type == "response.output_text.delta":
+                response += event.delta
+                response_container.markdown(response)
+
+    # Save the response ID for next turn
+    st.session_state.last_response_id = stream.get_final_response().id
+
     # Save assistant response to history
     st.session_state.messages.append({"role": "assistant", "content": response})
- 
+
     # LTM: Extract preferences in the background
     memory = extract_preferences(user_input, response, memory)
