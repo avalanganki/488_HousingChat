@@ -274,12 +274,12 @@ with st.sidebar:
 
     # Retrieval depth
     n_results = st.slider(
-        "Number of data chunks to retrieve",
-        min_value=1,
-        max_value=7,
-        value=3,
-        help="Higher = more context for the LLM, but slower and more tokens used.",
-    )
+    "Retrieval Depth",
+    min_value=1,
+    max_value=7,
+    value=3,
+)
+    st.caption("Higher means the assistant reviews more information before answering, but may take longer.")    
 
     # Reranking toggle
     use_reranking = st.toggle(
