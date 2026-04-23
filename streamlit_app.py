@@ -32,7 +32,8 @@ def load_chroma():
         metadatas = [c["metadata"] for c in housing_chunks]
         collection.add(ids=ids, documents=documents, metadatas=metadatas)
     return collection
- 
+
+collection = load_chroma()
  
 # OpenAI client
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
