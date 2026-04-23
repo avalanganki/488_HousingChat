@@ -14,11 +14,12 @@ import requests
 st.set_page_config(
     page_title="SU Housing Assistant",
     page_icon="🏠",
-    layout="centered"
+    layout="centered",
+    color='F76900'
 )
  
-st.title("🏠 Syracuse University Housing Assistant")
-st.caption("Ask anything about SU residence halls, room types, dining, and more.")
+st.title("🏠 Syracuse University Housing Assistant",color='#F76900')
+st.caption("Ask anything about SU residence halls, room types, dining, and more.",color='#000E54')
  
  
 # Loading ChromaDB - cached
@@ -259,11 +260,12 @@ with st.sidebar:
         max_value=7,
         value=3,
         help="Higher = more context for the LLM, but slower and more tokens used.",
+        color='#F76900'
     )
  
     # Reranking toggle
     use_reranking = st.toggle("Enable reranking", value=True, 
-                               help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.")
+                               help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.",color='#F76900')
  
     st.divider()
 
