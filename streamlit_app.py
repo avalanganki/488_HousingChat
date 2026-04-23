@@ -63,6 +63,8 @@ related to Syracuse University housing. Return ONLY a valid JSON object with any
 - "room_type": single, double, triple, suite, apartment
 - "budget": any mention of budget or price preference
 - "location_preference": quiet, social, near dining, near campus center, etc.
+- "neighborhood_preference": north neighborhood, west neighborhood, east neighborhood, south campus.
+- "amenities_preference": laundry wants, fitness centers, study rooms, kitchen types, air conditioning, penthouse access, music room access, computer clusters, entertainment areas.
 - "hall_preference": any specific halls they like or dislike
 - "other_preferences": any other housing preference mentioned
  
@@ -102,6 +104,8 @@ def format_memory_for_prompt(memory):
         "room_type": "Preferred Room Type",
         "budget": "Budget",
         "location_preference": "Location Preference",
+        "neighborhood_preference": "Neighborhood Preference",
+        "amenities_preference": "Amenities Preferences",
         "hall_preference": "Hall Preference",
         "other_preferences": "Other Preferences",
     }
@@ -219,7 +223,7 @@ that answers questions about SU residence halls and housing options.
  
 RULES:
 - Only answer questions using the provided housing context below. 
-- If the context does not contain enough information to answer, say so honestly.
+- If the context does not contain enough information to answer, say so honestly. Do not pull from other data. 
 - Do NOT make up information or use general knowledge about Syracuse University.
 - Be conversational and friendly — like a knowledgeable upperclassman helping out.
 - When comparing halls, organize your answer clearly.
