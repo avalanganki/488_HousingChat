@@ -289,7 +289,6 @@ with st.sidebar:
     )
 
     st.divider()
-    st.divider()
 
     # Class year filter
     st.header("Your Info")
