@@ -18,7 +18,7 @@ st.set_page_config(
 )
  
 st.markdown("<h1 style='color: #F76900;'>🏠 Syracuse University Housing Assistant</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #000E54; font-size: 14px;'>Ask anything about SU residence halls, room types, dining, and more.</p>", unsafe_allow_html=True)
+st.caption("Ask anything about SU residence halls, room types, dining, and more.")
  
  
 # Loading ChromaDB - cached
