@@ -204,7 +204,7 @@ def get_walking_distance(origin, destination):
             duration_seconds = int(route["duration"].replace("s", ""))
             
             distance_miles = round(distance_meters * 0.000621371, 2)
-            duration_minutes = round(duration_seconds / 60)
+            duration_minutes = (duration_seconds / 60)
             
             return f"Walking from {origin} to {destination}: approximately {distance_miles} miles ({duration_minutes} minutes on foot)."
         else:
@@ -257,7 +257,7 @@ st.markdown(
     }
 
     /* Toggle when active */
-    .stToggle > label > div[data-testid="stToggle"] > div {
+    .stToggle > label > div[data-testid="toggle"] > div {
         background-color: #F76900 !important;
     }
     </style>
