@@ -14,8 +14,7 @@ import requests
 st.set_page_config(
     page_title="SU Housing Assistant",
     page_icon="🏠",
-    layout="centered",
-    color='F76900'
+    layout="centered"
 )
  
 st.title("🏠 Syracuse University Housing Assistant",color='#F76900')
