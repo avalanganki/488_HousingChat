@@ -17,8 +17,8 @@ st.set_page_config(
     layout="centered"
 )
  
-st.title("🏠 Syracuse University Housing Assistant",color='#F76900')
-st.caption("Ask anything about SU residence halls, room types, dining, and more.",color='#000E54')
+st.markdown("<h1 style='color: #F76900;'>🏠 Syracuse University Housing Assistant</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #000E54; font-size: 14px;'>Ask anything about SU residence halls, room types, dining, and more.</p>", unsafe_allow_html=True)
  
  
 # Loading ChromaDB - cached
