@@ -245,13 +245,33 @@ HOUSING CONTEXT:
  
  
 # Sidebar
+st.markdown(
+    """
+    <style>
+    /* Slider track and thumb */
+    div[data-baseweb="slider"] div[role="slider"] {
+        background-color: #F76900 !important;
+    }
+    .stSlider > div > div > div > div {
+        background-color: #F76900 !important;
+    }
+
+    /* Toggle when active */
+    .stToggle > label > div[data-testid="stToggle"] > div {
+        background-color: #F76900 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 with st.sidebar:
     st.header("About")
     st.write(
         "This chatbot uses official Syracuse University housing data "
         "to answer your questions about residence halls."
     )
- 
+
     # Retrieval depth
     n_results = st.slider(
         "Number of data chunks to retrieve",
@@ -259,13 +279,16 @@ with st.sidebar:
         max_value=7,
         value=3,
         help="Higher = more context for the LLM, but slower and more tokens used.",
-        color='#F76900'
     )
- 
+
     # Reranking toggle
-    use_reranking = st.toggle("Enable reranking", value=True, 
-                               help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.",color='#F76900')
- 
+    use_reranking = st.toggle(
+        "Enable reranking",
+        value=True,
+        help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.",
+    )
+
+    st.divider()
     st.divider()
 
     # Class year filter
