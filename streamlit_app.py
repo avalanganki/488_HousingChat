@@ -25,7 +25,7 @@ st.caption("Ask anything about SU residence halls, room types, dining, and more.
 @st.cache_resource
 def load_chroma():
     client = chromadb.PersistentClient(path="./chroma_db")
-    collection = client.get_collection("su_housing")
+    collection = client.get_or_create_collection("su_housing")
     return collection
  
 collection = load_chroma()
