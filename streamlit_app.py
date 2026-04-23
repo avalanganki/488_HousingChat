@@ -141,7 +141,7 @@ TEXT: {chunk}
         return 5 
  
  
-def get_housing_context(user_question, n_results=3, use_reranking=True):
+def get_housing_context(user_question, collection, n_results=3, use_reranking=True):
     """
     Query ChromaDB for relevant housing data.
     If reranking is on: over-retrieve, score each chunk, keep the best ones.
@@ -379,7 +379,7 @@ USER QUESTION: {user_input}"""
             pass
 
     # Step 1 & 2: Retrieve + optionally rerank
-    context = get_housing_context(user_input, n_results=n_results, use_reranking=use_reranking)
+    context = get_housing_context(user_input, collection, n_results=n_results, use_reranking=use_reranking)
 
     # Step 3: Build system prompt with context AND memory
     system_with_context = SYSTEM_PROMPT.format(
