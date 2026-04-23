@@ -21,16 +21,16 @@ st.markdown("<h1 style='color: #F76900;'>🏠 Syracuse University Housing Assist
 st.caption("Ask anything about SU residence halls, room types, dining, and more.")
  
  
-# Loading ChromaDB - cached
 @st.cache_resource
 def load_chroma():
+    from build_db import housing_chunks
     client = chromadb.PersistentClient(path="./chroma_db")
-    try:
-        collection = client.get_collection("su_housing")
-    except Exception:
-        # Collection doesn't exist yet — build it
-        import build_db
-        collection = client.get_collection("su_housing")
+    collection = client.get_or_create_collection(name="su_housing")
+    if collection.count() == 0:
+        ids = [c["id"] for c in housing_chunks]
+        documents = [c["text"] for c in housing_chunks]
+        metadatas = [c["metadata"] for c in housing_chunks]
+        collection.add(ids=ids, documents=documents, metadatas=metadatas)
     return collection
  
  
