@@ -1,7 +1,3 @@
-# build_db.py
-# Run ONCE to create the ChromaDB from housing data chunks.
-# Usage: python build_db.py
-
 try:
     __import__('pysqlite3')
     import sys
@@ -12,10 +8,6 @@ except ImportError:
 import chromadb
 import os
 import shutil
-
-# ============================================================
-# 1. DEFINE ATTRIBUTE-BASED CHUNKS
-# ============================================================
 
 housing_chunks = [
     {
@@ -279,30 +271,22 @@ Getting to and from South Campus: Syracuse University shuttles run regularly thr
     },
 ]
 
-# ============================================================
-# 2. SET UP CHROMADB WITH PERSISTENCE
-# ============================================================
+if __name__ == "__main__":
+    if os.path.exists("./chroma_db"):
+        shutil.rmtree("./chroma_db")
 
-# Clear old database if it exists
-if os.path.exists("./chroma_db"):
-    shutil.rmtree("./chroma_db")
+    client = chromadb.PersistentClient(path="./chroma_db")
+    collection = client.get_or_create_collection(name="su_housing")
 
-client = chromadb.PersistentClient(path="./chroma_db")
-collection = client.get_or_create_collection(name="su_housing")
+    ids = [chunk["id"] for chunk in housing_chunks]
+    documents = [chunk["text"] for chunk in housing_chunks]
+    metadatas = [chunk["metadata"] for chunk in housing_chunks]
 
-# ============================================================
-# 3. ADD CHUNKS TO CHROMADB
-# ============================================================
+    collection.add(
+        ids=ids,
+        documents=documents,
+        metadatas=metadatas
+    )
 
-ids = [chunk["id"] for chunk in housing_chunks]
-documents = [chunk["text"] for chunk in housing_chunks]
-metadatas = [chunk["metadata"] for chunk in housing_chunks]
-
-collection.add(
-    ids=ids,
-    documents=documents,
-    metadatas=metadatas
-)
-
-print(f"Added {len(ids)} chunks to the collection.")
-print(f"Database saved to: ./chroma_db")
+    print(f"Added {len(ids)} chunks to the collection.")
+    print(f"Database saved to: ./chroma_db")
