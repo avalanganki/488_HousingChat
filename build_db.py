@@ -22,21 +22,10 @@ All Syracuse University residence halls use an ID card swipe access system and a
         "text": """Attribute: Class Year Eligibility by Residence Hall
 
 First Year/Freshman students are housed in: Boland Hall, Brockway Hall, Brewster Hall, Day Hall, Flint Hall, Sadler Hall, Haven Hall, DellPlain Hall, Ernie Davis Hall, Lawrinson Hall, Shaw Hall.
-Second Year/Sophomore students are housed in: Booth Hall, Haven Hall, DellPlain Hall, Oren Lyons Hall, Shaw Hall, Walnut Hall, Washington Arms, Orange Hall, Milton Hall, South Campus Apartments, Skyhall I, Skyhall II, Skyhall III.
+Second Year/Sophomore students are housed in: Booth Hall, Haven Hall, DellPlain Hall, Oren Lyons Hall, Shaw Hall, Walnut Hall, Washington Arms, Orange Hall, Milton Hall, South Campus Apartments, Skyhall I, Skyhall II, Skyhall III, Ernie Davis.
 Third Year/Junior and Fourth Year/Senior students can live in: South Campus Apartments, Off-campus (unaffiliated with the university) houses or apartments.
 Transfer Students are typically housed in: Skyhall I, Skyhall II, Skyhall III, South Campus Apartments.""",
         "metadata": {"attribute": "class_year"}
-    },
-    {
-        "id": "neighborhoods",
-        "text": """Attribute: Neighborhood and Location by Residence Hall
-
-North Campus — North Neighborhood: Booth Hall, Haven Hall, Milton Hall, Orange Hall, Walnut Hall, Washington Arms.
-North Campus — East Neighborhood: DellPlain Hall, Ernie Davis Hall, Oren Lyons Hall, Shaw Hall, Watson Hall.
-North Campus — West Neighborhood: Boland Hall, Brewster Hall, Brockway Hall, Lawrinson Hall, Sadler Hall.
-North Campus — Mount Olympus Neighborhood: Day Hall, Flint Hall.
-South Campus: Skyhall I, Skyhall II, Skyhall III, South Campus Apartments.""",
-        "metadata": {"attribute": "neighborhoods"}
     },
     {
         "id": "dining_access",
