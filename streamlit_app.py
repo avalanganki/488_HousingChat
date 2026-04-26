@@ -373,7 +373,7 @@ USER QUESTION: {user_input}"""
             pass
 
     # Step 1 & 2: Retrieve + optionally rerank
-    context = get_housing_context(user_input, collection, n_results=n_results, use_reranking=use_reranking)
+    context = get_housing_context(user_input, collection, n_results=n_results, use_reranking)
 
     # Step 3: Build system prompt with context AND memory
     system_with_context = SYSTEM_PROMPT.format(
