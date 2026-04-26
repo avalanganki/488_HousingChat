@@ -8,7 +8,6 @@ from openai import OpenAI
 import chromadb
 import json
 import os
-import requests
  
 # Page Configurations
 st.set_page_config(
@@ -117,7 +116,7 @@ def format_memory_for_prompt(memory):
     return "\n".join(lines)
 
 
-# Reranking using nano
+# Reranking using GPT-4o-mini
 def score_chunk(chunk, question):
     """Score how relevant a chunk is to the user's question (1-10)."""
     scoring_prompt = f"""Rate how relevant this text is to answering the question.
@@ -161,60 +160,21 @@ def get_housing_context(user_question, collection, n_results=3, use_reranking=Tr
             scored.append((score, chunk))
  
         # Step 3: Sort by score (highest first) and keep top n_results
-        # But always include chunks that scored 5 or above
         scored.sort(key=lambda x: x[0], reverse=True)
         best_chunks = [chunk for score, chunk in scored if score >= 5]
         if len(best_chunks) == 0:
             best_chunks = [chunk for _, chunk in scored[:n_results]]
         elif len(best_chunks) > n_results:
             best_chunks = best_chunks[:n_results]
+    else:
+        # No reranking — original behavior
+        results = collection.query(
+            query_texts=[user_question],
+            n_results=n_results,
+        )
+        best_chunks = results["documents"][0]
  
     return "\n\n---\n\n".join(best_chunks)
-
-
-# WALKING TOOL CODE HERE
-# Walking Distance Tool
-def get_walking_distance(origin, destination):
-    """
-    Uses Google Maps Routes API to get walking distance and time
-    between two locations on/near Syracuse University campus.
-    """
-    api_key = st.secrets["GOOGLE_MAPS_API_KEY"]
-    url = "https://routes.googleapis.com/directions/v2:computeRoutes"
-    
-    headers = {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.legs.duration,routes.legs.distanceMeters"
-    }
-    
-    body = {
-        "origin": {
-            "address": f"{origin}, Syracuse University, Syracuse, NY"
-        },
-        "destination": {
-            "address": f"{destination}, Syracuse University, Syracuse, NY"
-        },
-        "travelMode": "WALK"
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=body)
-        data = response.json()
-        
-        if "routes" in data and len(data["routes"]) > 0:
-            route = data["routes"][0]
-            distance_meters = route["distanceMeters"]
-            duration_seconds = int(route["duration"].replace("s", ""))
-            
-            distance_miles = round(distance_meters * 0.000621371, 2)
-            duration_minutes = (duration_seconds / 60)
-            
-            return f"Walking from {origin} to {destination}: approximately {distance_miles} miles ({duration_minutes} minutes on foot)."
-        else:
-            return f"Sorry, I couldn't find walking directions from {origin} to {destination}."
-    except Exception as e:
-        return f"Error getting walking directions: {str(e)}"
 
 
 # System Prompt
@@ -237,14 +197,17 @@ RULES:
   recommendations based on housing eligibility for that class year.
 - If you know the student's preferences (listed below), use them to personalize your answers.
 
+WALKING DISTANCES:
+- The housing context includes pre-computed walking distances from major campus landmarks 
+  (Whitman, Bird Library, Schine, the Dome, the Quad, Life Sciences) to every residence hall.
+- When a student asks how far a hall is from a building, or which halls are closest to a 
+  landmark, use the walking distance data from the context to answer.
+- Always include the approximate miles AND minutes when citing walking distances.
+- For South Campus locations (Skyhall I/II/III, South Campus Apartments), note that a 
+  shuttle is required to get to main campus.
+
 STUDENT PREFERENCES (from previous conversations):
 {preferences}
-
-WALKING DIRECTIONS:
-When a student asks a location question with no origin, run each residence hall in relation to the landmark. 
-If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information.
-Do not mention neighborhoods, generate based on addresses.
-{walking_info}
 
 HOUSING CONTEXT:
 {context}
@@ -284,12 +247,19 @@ with st.sidebar:
 
     # Retrieval depth
     n_results = st.slider(
-    "Retrieval Depth",
-    min_value=1,
-    max_value=7,
-    value=3,
-)
+        "Retrieval Depth",
+        min_value=1,
+        max_value=7,
+        value=3,
+    )
     st.caption("Higher means the assistant reviews more information before answering, but may take longer.")    
+
+    # Reranking toggle
+    use_reranking = st.toggle(
+        "Enable reranking",
+        value=True,
+        help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.",
+    )
 
     st.divider()
 
@@ -342,71 +312,20 @@ if user_input := st.chat_input("Ask about SU housing..."):
         st.markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
  
-  # Load current memory
+    # Load current memory
     memory = load_memory()
  
-    # Check if user is asking about walking distance
-    walking_info = ""
-    walking_keywords = ["walk", "distance", "how far", "minutes from", "close to", "near", "get to", "commute"]
-    if any(keyword in user_input.lower() for keyword in walking_keywords):
-        extract_prompt = f"""The user is asking about walking distance at Syracuse University.
+    # Retrieve context from ChromaDB (walking distances are now baked into the DB)
+    context = get_housing_context(user_input, collection, n_results=n_results, use_reranking=use_reranking)
 
-If the question mentions TWO specific locations, return:
-{{"type": "two_locations", "origin": "location 1", "destination": "location 2"}}
-
-If the question asks which halls are NEAR or CLOSE TO a single landmark (like a school, library, gym), return:
-{{"type": "nearby_search", "landmark": "the landmark name"}}
-
-If you can't figure it out, return: {{"error": "true"}}
-
-USER QUESTION: {user_input}"""
-        
-        try:
-            extract_response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": extract_prompt}],
-                temperature=0,
-                max_tokens=150,
-            )
-            result = extract_response.choices[0].message.content.strip()
-            result = result.replace("```json", "").replace("```", "").strip()
-            locations = json.loads(result)
-            
-            if locations.get("type") == "two_locations":
-                walking_info = get_walking_distance(locations["origin"], locations["destination"])
-            
-            elif locations.get("type") == "nearby_search":
-                landmark = locations["landmark"]
-                halls = ["Ernie Davis Hall", "Booth Hall", "DellPlain Hall", "Haven Hall", 
-                "Shaw Hall", "Lawrinson Hall", "Brewster Hall", "Boland Hall",
-                "Day Hall", "Watson Hall", "Sadler Hall", "Brockway Hall",
-                "Oren Lyons Hall", "Milton Hall", "Walnut Hall", 
-                "Washington Arms", "Orange Hall", "Flint Hall"]
-
-                distances = []
-                for hall in halls:
-                    result_text = get_walking_distance(hall, landmark)
-                    if "approximately" in result_text:
-                        distances.append(result_text)
-                if distances:
-                    walking_info = "Walking distances from residence halls to " + landmark + ":\n" + "\n".join(distances)
-                    
-        except (json.JSONDecodeError, Exception):
-            pass
-
-
-    # Step 1 & 2: Retrieve + optionally rerank
-    context = get_housing_context(user_input, collection, n_results=n_results)
-
-    # Step 3: Build system prompt with context AND memory
+    # Build system prompt with context AND memory
     system_with_context = SYSTEM_PROMPT.format(
         context=context,
         preferences=format_memory_for_prompt(memory),
         class_year=class_year,
-        walking_info=walking_info if walking_info else "No walking directions requested.",
     )
 
-    # Step 4 & 5: Call Responses API with streaming
+    # Call Responses API with streaming
     with st.chat_message("assistant"):
         stream = client.responses.create(
             model="gpt-4.1",
