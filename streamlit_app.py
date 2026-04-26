@@ -393,7 +393,7 @@ USER QUESTION: {user_input}"""
     # Step 4 & 5: Call Responses API with streaming
     with st.chat_message("assistant"):
         stream = client.responses.create(
-            model="gpt-4o",
+            model="gpt-4.1",
             instructions=system_with_context,
             input=user_input,
             previous_response_id=st.session_state.last_response_id,
