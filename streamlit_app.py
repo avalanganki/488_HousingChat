@@ -67,7 +67,6 @@ related to Syracuse University housing. Return ONLY a valid JSON object with any
 - "room_type": single, double, triple, suite, apartment
 - "budget": any mention of budget or price preference
 - "location_preference": quiet, social, near dining, near campus center, etc.
-- "neighborhood_preference": north neighborhood, west neighborhood, east neighborhood, south campus.
 - "amenities_preference": laundry wants, fitness centers, study rooms, kitchen types, air conditioning, penthouse access, music room access, computer clusters, entertainment areas.
 - "hall_preference": any specific halls they like or dislike
 - "other_preferences": any other housing preference mentioned
@@ -108,7 +107,6 @@ def format_memory_for_prompt(memory):
         "room_type": "Preferred Room Type",
         "budget": "Budget",
         "location_preference": "Location Preference",
-        "neighborhood_preference": "Neighborhood Preference",
         "amenities_preference": "Amenities Preferences",
         "hall_preference": "Hall Preference",
         "other_preferences": "Other Preferences",
@@ -243,7 +241,7 @@ STUDENT PREFERENCES (from previous conversations):
 
 WALKING DIRECTIONS:
 When a student asks about location or relative distances between any landmarks, use the walking distance information which is below. 
-If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information, and prioritize that over the neighborhoods.
+If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information
 
 {walking_info}
  
