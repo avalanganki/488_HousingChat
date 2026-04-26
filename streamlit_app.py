@@ -242,8 +242,8 @@ STUDENT PREFERENCES (from previous conversations):
 {preferences}
 
 WALKING DIRECTIONS:
-If a student asks about walking distance, how far something is, or how long it takes 
-to walk between two locations, you will be given walking distance data. Use it in your answer.
+When a student asks about location or relative distances between any landmarks, use the walking distance information which is below. 
+If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information, and prioritize that over the neighborhoods.
 
 {walking_info}
  
