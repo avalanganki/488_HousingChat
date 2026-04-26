@@ -289,13 +289,6 @@ with st.sidebar:
 )
     st.caption("Higher means the assistant reviews more information before answering, but may take longer.")    
 
-    # Reranking toggle
-    use_reranking = st.toggle(
-        "Enable reranking",
-        value=True,
-        help="Uses AI to pick the most relevant chunks. More accurate but slightly slower.",
-    )
-
     st.divider()
 
     # Class year filter
