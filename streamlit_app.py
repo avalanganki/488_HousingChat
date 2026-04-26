@@ -161,15 +161,13 @@ def get_housing_context(user_question, collection, n_results=3, use_reranking=Tr
             scored.append((score, chunk))
  
         # Step 3: Sort by score (highest first) and keep top n_results
+        # But always include chunks that scored 5 or above
         scored.sort(key=lambda x: x[0], reverse=True)
-        best_chunks = [chunk for _, chunk in scored[:n_results]]
-    else:
-        # No reranking — original behavior
-        results = collection.query(
-            query_texts=[user_question],
-            n_results=n_results,
-        )
-        best_chunks = results["documents"][0]
+        best_chunks = [chunk for score, chunk in scored if score >= 5]
+        if len(best_chunks) == 0:
+            best_chunks = [chunk for _, chunk in scored[:n_results]]
+        elif len(best_chunks) > n_results:
+            best_chunks = best_chunks[:n_results]
  
     return "\n\n---\n\n".join(best_chunks)
 
@@ -243,7 +241,7 @@ STUDENT PREFERENCES (from previous conversations):
 {preferences}
 
 WALKING DIRECTIONS:
-When a student asks about location or relative distances between any landmarks, use the walking distance information which is below. 
+When a student asks a location question with no origin, run each residence hall in relation to the landmark. 
 If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information.
 Do not mention neighborhoods, generate based on addresses.
 {walking_info}
@@ -351,12 +349,15 @@ if user_input := st.chat_input("Ask about SU housing..."):
     walking_info = ""
     walking_keywords = ["walk", "distance", "how far", "minutes from", "close to", "near", "get to", "commute"]
     if any(keyword in user_input.lower() for keyword in walking_keywords):
-        # Use GPT to extract the two locations from the question
-        extract_prompt = f"""The user is asking about walking distance between locations at Syracuse University.
-Extract the two locations from their question. Return ONLY a JSON object like:
-{{"origin": "location 1", "destination": "location 2"}}
+        extract_prompt = f"""The user is asking about walking distance at Syracuse University.
 
-If you can't find two clear locations, return: {{"error": "true"}}
+If the question mentions TWO specific locations, return:
+{{"type": "two_locations", "origin": "location 1", "destination": "location 2"}}
+
+If the question asks which halls are NEAR or CLOSE TO a single landmark (like a school, library, gym), return:
+{{"type": "nearby_search", "landmark": "the landmark name"}}
+
+If you can't figure it out, return: {{"error": "true"}}
 
 USER QUESTION: {user_input}"""
         
@@ -365,16 +366,32 @@ USER QUESTION: {user_input}"""
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": extract_prompt}],
                 temperature=0,
-                max_tokens=100,
+                max_tokens=150,
             )
             result = extract_response.choices[0].message.content.strip()
             result = result.replace("```json", "").replace("```", "").strip()
             locations = json.loads(result)
             
-            if "error" not in locations:
+            if locations.get("type") == "two_locations":
                 walking_info = get_walking_distance(locations["origin"], locations["destination"])
+            
+            elif locations.get("type") == "nearby_search":
+                landmark = locations["landmark"]
+                halls = ["Ernie Davis Hall", "Booth Hall", "DellPlain Hall", "Haven Hall", 
+                         "Shaw Hall", "Lawrinson Hall", "Brewster Hall", "Boland Hall",
+                         "Day Hall", "Watson Hall", "Sadler Hall", "Brockway Hall",
+                         "Oren Lyons Hall"]
+                distances = []
+                for hall in halls:
+                    result_text = get_walking_distance(hall, landmark)
+                    if "approximately" in result_text:
+                        distances.append(result_text)
+                if distances:
+                    walking_info = "Walking distances from residence halls to " + landmark + ":\n" + "\n".join(distances)
+                    
         except (json.JSONDecodeError, Exception):
             pass
+
 
     # Step 1 & 2: Retrieve + optionally rerank
     context = get_housing_context(user_input, collection, n_results=n_results)
