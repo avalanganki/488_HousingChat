@@ -242,7 +242,7 @@ STUDENT PREFERENCES (from previous conversations):
 WALKING DIRECTIONS:
 When a student asks about location or relative distances between any landmarks, use the walking distance information which is below. 
 If a student asks "Which hall should I live in if I want to be close to a specific school", use the walking distance information
-
+Do not mention neighborhoods, generate based on addresses
 {walking_info}
  
 HOUSING CONTEXT:
