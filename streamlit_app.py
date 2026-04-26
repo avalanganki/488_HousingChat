@@ -378,9 +378,11 @@ USER QUESTION: {user_input}"""
             elif locations.get("type") == "nearby_search":
                 landmark = locations["landmark"]
                 halls = ["Ernie Davis Hall", "Booth Hall", "DellPlain Hall", "Haven Hall", 
-                         "Shaw Hall", "Lawrinson Hall", "Brewster Hall", "Boland Hall",
-                         "Day Hall", "Watson Hall", "Sadler Hall", "Brockway Hall",
-                         "Oren Lyons Hall"]
+                "Shaw Hall", "Lawrinson Hall", "Brewster Hall", "Boland Hall",
+                "Day Hall", "Watson Hall", "Sadler Hall", "Brockway Hall",
+                "Oren Lyons Hall", "Milton Hall", "Walnut Hall", 
+                "Washington Arms", "Orange Hall", "Flint Hall"]
+
                 distances = []
                 for hall in halls:
                     result_text = get_walking_distance(hall, landmark)
