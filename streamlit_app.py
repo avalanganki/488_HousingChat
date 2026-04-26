@@ -139,6 +139,27 @@ TEXT: {chunk}
         return 5 
  
  
+def get_walking_context(user_question, collection):
+    """
+    If the user is asking a walking/distance/proximity question, retrieve ALL
+    walking distance chunks so the LLM has complete data. Returns them as a
+    separate string (or empty string if not a walking question).
+    """
+    walking_keywords = ["walk", "distance", "how far", "minutes from", "close to",
+                        "near", "closest", "get to", "commute", "proximity"]
+    if not any(kw in user_question.lower() for kw in walking_keywords):
+        return ""
+
+    # Pull all walking distance chunks by metadata
+    results = collection.get(
+        where={"hall": "Walking Distances"},
+        include=["documents"],
+    )
+    if results and results["documents"]:
+        return "\n\n---\n\n".join(results["documents"])
+    return ""
+
+
 def get_housing_context(user_question, collection, n_results=3, use_reranking=True):
     """
     Query ChromaDB for relevant housing data.
@@ -315,8 +336,17 @@ if user_input := st.chat_input("Ask about SU housing..."):
     # Load current memory
     memory = load_memory()
  
-    # Retrieve context from ChromaDB (walking distances are now baked into the DB)
-    context = get_housing_context(user_input, collection, n_results=n_results, use_reranking=use_reranking)
+    # Step 1: Check if this is a walking/distance question — if so, grab ALL distance chunks
+    walking_context = get_walking_context(user_input, collection)
+
+    # Step 2: Retrieve hall info from ChromaDB via normal RAG pipeline
+    housing_context = get_housing_context(user_input, collection, n_results=n_results, use_reranking=use_reranking)
+
+    # Step 3: Combine — walking distances go first so the LLM always has full data
+    if walking_context:
+        context = walking_context + "\n\n---\n\n" + housing_context
+    else:
+        context = housing_context
 
     # Build system prompt with context AND memory
     system_with_context = SYSTEM_PROMPT.format(
