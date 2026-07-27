@@ -1,19 +1,35 @@
-# 🎈 Blank app template
+# 🏠 Syracuse University Housing Assistant
 
-A simple Streamlit app template for you to modify!
+A retrieval-augmented generation (RAG) chatbot that answers questions about Syracuse University residence halls — room types, dining options, and other housing details — using official SU housing data.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+Live app: housingchat488.streamlit.app
 
-### How to run it on your own machine
+Features
+- Natural language Q&A over official SU housing data (residence halls, room types, dining, etc.)
+- Adjustable retrieval depth — controls how much context the assistant reviews before answering (tradeoff between speed and thoroughness)
+- Reranking toggle — reorders retrieved documents by relevance before passing them to the LLM, improving answer accuracy
+Streamlit UI for a clean, interactive chat experience
 
-1. Install the requirements
+How it works
+- SU housing data is embedded and stored in a vector database
+- On a user query, relevant chunks are retrieved (depth configurable via the sidebar)
+- Optional reranking step reorders results by relevance
+- Retrieved context + query are passed to the OpenAI API to generate a grounded answer
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+Tech stack
+- Frontend: Streamlit
+- LLM: OpenAI API
+- Retrieval: Vector database (e.g., FAISS/Chroma/Pinecone)
+- Language: Python
 
-2. Run the app
+Running locally
+bash
+git clone https://github.com/avalanganki/488_HousingChat.git
+cd 488_HousingChat
+pip install -r requirements.txt
+streamlit run app.py
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+You'll need an OpenAI API key set as an environment variable (OPENAI_API_KEY).
+
+Project context
+- Built for IST 488: AI Chatbots at Syracuse University's iSchool.
